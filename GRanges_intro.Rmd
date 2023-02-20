@@ -1,0 +1,230 @@
+---
+title: "GRanges"
+output: html_notebook
+---
+
+Intorduction to granges class using package "GenomicRanges"
+
+```{r}
+library(GenomicRanges)
+```
+
+GRanges are similar to IRanges but have extra information about chromosomal strands.
+
+Following is an example of GRange:
+
+```{r}
+gr = GRanges(seqnames = c("chr1"),
+             strand = c("+", "-", "+"),
+             ranges = IRanges(start = c(1,3,5), width = 3))
+
+gr
+```
+Because the ranges are on + and minus strands of chromosome (DNA), they have direction. We can thus get flanking positions to a position on the chromosomes.
+
+```{r}
+flank(gr, 5)
+```
+
+We can also print the promoter regions with respect to the ranges. Promoter are 2000 bases upstream to 200 bases downstream, which is 2200 base interval. 
+
+```{r}
+promoters(gr)
+```
+
+We ca nadd additional information about the chromosomes, such as seqlength and print the information using seqinfo function
+
+```{r}
+seqlengths(gr) = c("chr1" = 10)
+seqinfo(gr)
+```
+
+```{r}
+seqlevels(gr)
+```
+
+There are few functions that are applicable to whole chromosome. e.g. gaps
+
+```{r}
+print(gr)
+gaps(gr)
+```
+Note that there is a star strand. Currently, I don't know what it is.
+
+We can now try to add new chromosomes. Let's say we want to add one more chromosome. But before that we have to define the seqlevels to have that chromosome.
+
+```{r}
+# define selevels
+seqlevels(gr) = c("chr1", "chr2")
+
+```
+Now we can add the chromosome names to the same GRanges
+
+```{r}
+seqnames(gr) = c("chr1", "chr2", "chr1")
+gr
+```
+
+Sorting of granges are done based on chromosome levels (seqlevels)
+
+```{r}
+sort(gr)
+```
+Here the chr2 to comes after chr1. We can rearrange the levels and see the sorting again.
+
+```{r}
+seqlevels(gr) = c("chr2", "chr1")
+sort(gr)
+```
+Now we see that the chr2 comes first.
+
+We can also assign genome to the seqeunces. It comes handy when we use control DNA in sequencing experiments.
+
+Let's assign gr to a genome and copy the gr into gr2 and assign another genome to gr2.
+
+```{r}
+gr2 = gr
+genome(gr) = "hg19"
+genome(gr2) = "hg18"
+
+```
+Now that both these granges are same, to confirm that they are indeed on separate genomes, we will use the overlaps function.
+
+```{r}
+findOverlaps(gr, gr2)
+```
+We, get the error saying the seqeunces have incompatible genomes, meaning they are not on the same genome.
+
+
+As opposed to dts.frames in R, DataFrames allow many more type of objects.
+Example it allows to store IRanges.
+
+```{r}
+ir = IRanges(start = c(1:3), width = 2)
+df = DataFrame(ir = ir, score = rnorm(3))
+df
+```
+
+Some usage of df:
+
+```{r}
+df[1,1]
+
+
+
+df$ir
+```
+Compare it with normal dataframe.
+
+
+```{r}
+df
+
+df2 = data.frame(ir = ir)
+df2
+```
+
+The normal dataframe has separate columns for start an end.
+
+Let's make another GRanges.
+
+```{r}
+gr <- GRanges(seqnames = "chr1", 
+              strand = c("+", "-", "+"),
+              ranges = IRanges(start = c(1,3,5), width = 3))
+gr
+```
+
+GRanges can have values.
+
+```{r}
+values(gr) = DataFrame(score = rnorm(3))
+gr
+```
+
+```{r}
+# print values
+print(values(gr))
+
+#print mcols
+#mcols isDataFrame object containing metadata columns.
+print(mcols(gr))
+
+
+#other ways to access gr
+gr$score
+
+#add another column
+gr$score2 = gr$score / 3
+gr
+```
+
+Let's define a new GRanges to see how to use overlap functions.
+
+```{r}
+gr2 = GRanges(seqnames = c("chr1", "chr2", "chr1"),
+              strand = "*",
+              ranges = IRanges(start = c(1,3,5), width = 3))
+gr
+gr2
+```
+
+We will find overlaps between these ranges
+
+```{r}
+findOverlaps(gr,gr2)
+
+```
+
+```{r}
+findOverlaps(gr,gr2, ignore.strand = TRUE)
+#This allows overlaps between + and - strands
+
+```
+
+The star strand overlaps with both + and - strands.
+
+We sometimes would want to consider sequences that have overlaps.
+To get those sequences:
+
+```{r}
+subsetByOverlaps(gr, gr2)
+```
+
+```{r}
+subsetByOverlaps(gr2, gr)
+```
+So, there are not overlaps on chr2.
+
+
+Making GRanges from dataframes.
+
+```{r}
+df = data.frame(chr = "chr1",
+                 start = 1:3,
+                 end = 4:6,
+                 score = rnorm(3))
+df
+
+# make GRanges
+df1 = makeGRangesFromDataFrame(df)
+df1
+```
+
+To get the score column.
+
+```{r}
+df1 = makeGRangesFromDataFrame(df, keep.extra.columns = TRUE)
+df1
+```
+
+
+
+
+
+
+
+
+
+
+
